@@ -1,0 +1,1 @@
+{"advert":"1","fontsize":"11","display":"block","font":"arial","width":"200","colorBorder":"#FFFFFF","colorLayout":"#FFFFFF","colorAnchortext":"#3333FF","colorDesc":"#000000","encode":null}

@@ -1,0 +1,10 @@
+[15-Jul-2015 12:32:43 America/Chicago] PHP Fatal error:  Call to undefined function _deprecated_file() in /home1/huken86/public_html/van.edu.vn/wp-includes/rss-functions.php on line 8
+[30-Jul-2015 11:49:03 America/Chicago] PHP Fatal error:  Call to undefined function _deprecated_file() in /home1/huken86/public_html/van.edu.vn/wp-includes/rss-functions.php on line 8
+[14-Aug-2015 11:51:24 America/Chicago] PHP Fatal error:  Call to undefined function _deprecated_file() in /home1/huken86/public_html/van.edu.vn/wp-includes/rss-functions.php on line 8
+[29-Aug-2015 11:47:01 America/Chicago] PHP Fatal error:  Call to undefined function _deprecated_file() in /home1/huken86/public_html/van.edu.vn/wp-includes/rss-functions.php on line 8
+[27-Dec-2016 14:56:39 America/Chicago] PHP Fatal error:  Call to undefined function _deprecated_file() in /home1/huken86/public_html/van.edu.vn/wp-includes/registration-functions.php on line 7
+[05-Jan-2017 11:34:09 America/Chicago] PHP Fatal error:  Call to undefined function _deprecated_file() in /home1/huken86/public_html/van.edu.vn/wp-includes/registration-functions.php on line 7
+[11-Jan-2017 18:05:23 America/Chicago] PHP Warning:  require(ABSPATHWPINC/option.php): failed to open stream: No such file or directory in /home1/huken86/public_html/van.edu.vn/wp-includes/functions.php on line 8
+[11-Jan-2017 18:05:23 America/Chicago] PHP Warning:  require(ABSPATHWPINC/option.php): failed to open stream: No such file or directory in /home1/huken86/public_html/van.edu.vn/wp-includes/functions.php on line 8
+[11-Jan-2017 18:05:23 America/Chicago] PHP Fatal error:  require(): Failed opening required 'ABSPATHWPINC/option.php' (include_path='.:/opt/php54/lib/php') in /home1/huken86/public_html/van.edu.vn/wp-includes/functions.php on line 8
+[11-Jan-2017 19:06:31 America/Chicago] PHP Fatal error:  Call to undefined function _deprecated_file() in /home1/huken86/public_html/van.edu.vn/wp-includes/session.php on line 8

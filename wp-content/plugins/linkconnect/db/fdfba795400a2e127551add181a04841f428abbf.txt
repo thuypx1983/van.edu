@@ -1,0 +1,9 @@
+{"link_id":"14423","link_url":"http:\/\/www.van.edu.vn\/phan-tich-tam-trang-cua-nhan-vat-tru-tinh-qua-bai-tho-toi-yeu-em-cua-puskin.html","link_title":null,"link_anchortext":"Ph\u00e2n t\u00edch t\u00e2m tr\u1ea1ng c\u1ee7a nh\u00e2n v\u1eadt tr\u1eef t\u00ecnh trong b\u00e0i th\u01a1 T\u00f4i y\u00eau em c\u1ee7a Puskin","link_desc":"Ph\u00e2n t\u00edch t\u00e2m tr\u1ea1ng c\u1ee7a nh\u00e2n v\u1eadt tr\u1eef t\u00ecnh trong b\u00e0i th\u01a1 T\u00f4i y\u00eau em c\u1ee7a Puskin"}
+
+{"link_id":"14424","link_url":"http:\/\/www.van.edu.vn\/cam-nhan-cua-ban-ve-truyen-ngan-hai-dua-tre-cua-thach-lam.html","link_title":null,"link_anchortext":"C\u1ea3m nh\u1eadn v\u1ec1 truy\u1ec7n Hai \u0111\u1ee9a tr\u1ebb c\u1ee7a Th\u1ea1ch Lam","link_desc":"C\u1ea3m nh\u1eadn v\u1ec1 truy\u1ec7n Hai \u0111\u1ee9a tr\u1ebb c\u1ee7a Th\u1ea1ch Lam"}
+
+{"link_id":"14425","link_url":"http:\/\/www.van.edu.vn\/binh-giang-bai-tho-tong-biet-hanh-cua-tham-tam.html","link_title":null,"link_anchortext":"B\u00ecnh gi\u1ea3ng b\u00e0i th\u01a1 T\u1ed1ng Bi\u1ec7t H\u00e0nh c\u1ee7a Th\u00e2m T\u00e2m","link_desc":"B\u00ecnh gi\u1ea3ng b\u00e0i th\u01a1 T\u1ed1ng Bi\u1ec7t H\u00e0nh c\u1ee7a Th\u00e2m T\u00e2m"}
+
+{"link_id":"14426","link_url":"http:\/\/www.van.edu.vn\/phan-tich-bai-tho-duyen-cua-xuan-dieu.html","link_title":null,"link_anchortext":"Ph\u00e2n t\u00edch b\u00e0i Th\u01a1 duy\u00ean c\u1ee7a Xu\u00e2n Di\u1ec7u","link_desc":"Ph\u00e2n t\u00edch b\u00e0i Th\u01a1 duy\u00ean c\u1ee7a Xu\u00e2n Di\u1ec7u"}
+
+{"link_id":"14427","link_url":"http:\/\/www.van.edu.vn\/binh-giang-doan-tho-trong-bai-voi-vang-cua-xuan-dieu.html","link_title":null,"link_anchortext":"B\u00ecnh gi\u1ea3ng \u0111o\u1ea1n th\u01a1 trong b\u00e0i V\u1ed9i v\u00e0ng c\u1ee7a Xu\u00e2n Di\u1ec7u","link_desc":"B\u00ecnh gi\u1ea3ng \u0111o\u1ea1n th\u01a1 trong b\u00e0i V\u1ed9i v\u00e0ng c\u1ee7a Xu\u00e2n Di\u1ec7u"}
