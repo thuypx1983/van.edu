@@ -1,9 +1,9 @@
 === Quick Adsense ===
-Contributors: toddynho, philipze
+Contributors: quickadsense
 Tags: WordPress Plugin, adsense, google adsense, random adsense, random ads, advertising, adsense insertion, ad manager, ad, yahoo, google, ads, text insertion, widget, sidebar, admin, posts, plugin
-Requires at least: 2.5
-Tested up to: 3.5.1
-Stable tag: 1.9.2
+Requires at least: 4.0
+Tested up to: 4.9.4
+Stable tag: 2.3.2
 
 Quick Adsense offers a quicker & flexible way to insert Google Adsense or any Ads code into a blog post.
 
@@ -29,7 +29,7 @@ Here are some **features** that come with this plugin:
 
 Sign up for a [Google Adsense Account](http://adsense.google.com/) to generate revenue from your blog, if you don't have one.
 
-[Installation](http://wordpress.org/extend/plugins/quick-adsense/installation/) | [Screen Shots](http://wordpress.org/extend/plugins/quick-adsense/screenshots/) | [Plugin Homepage](http://quicksense.net/)
+[Installation](http://wordpress.org/extend/plugins/quick-adsense/installation/) | [Screen Shots](http://wordpress.org/extend/plugins/quick-adsense/screenshots/) | [Plugin Homepage](http://quickadsense.com/)
 
 == Screenshots ==
 
@@ -45,9 +45,40 @@ Sign up for a [Google Adsense Account](http://adsense.google.com/) to generate r
 
 == Frequently Asked Questions ==
 
-Please feedback to [http://quicksense.net/](http://quicksense.net/) for any bug you might have found, or any suggestion you like to add. 
+Please feedback to [http://quickadsense.com/](http://quickadsense.com/) for any bug you might have found, or any suggestion you like to add. 
 
 == Change Log ==
+= 2.3.2 =
+* Bug fixes
+
+= 2.3 =
+* Updated ads.txt modification logic
+* Introduced monetization with video intelligence AG
+* UI fixes
+
+= 2.2 =
+* Fixed functionality issues
+
+= 2.1 =
+* Optimized UI
+* Integrarion with video intelligence on better monetization
+* Brought plugin uptodate with latest wordpress standards
+* Removed all legacy code
+* Legacy Tinymce API replaced with current API
+* Legacy Widget API replaced with current API
+
+= 2.0.1 =
+* Bug Fix: Fixed a bug which caused a JS error in specific use cases.
+* Date: 19-December-2017
+
+= 2.0 =
+* The number of individual database calls has been reduced from 80 to just 1, also almost all of the legacy code has been altered and code base re-structured to be better understandable.
+* Info update.
+* Date: 14-September-2017
+
+= 1.9.3 =
+* Info update.
+* Date: 29-August-2017
 
 = 1.9.2 =
 * Update the depreciated wp code function for AdsWidget in the plugin.

@@ -65,6 +65,11 @@ class BackWPup_Install {
 			wp_schedule_event( time(), 'twicedaily', 'backwpup_check_cleanup' );
 		}
 
+		// Add schedule to update backend message
+		if ( ! wp_next_scheduled( 'backwpup_update_message' ) ) {
+    		wp_schedule_event( time(), 'twicedaily', 'backwpup_update_message' );
+		}
+
 		//add capabilities to administrator role
 		$role = get_role( 'administrator' );
 		if ( is_object( $role ) && method_exists( $role, 'add_cap' ) ) {
@@ -224,7 +229,6 @@ class BackWPup_Install {
 			$jobvalue[ 's3bucket' ] = $jobvalue[ 'awsBucket' ];
 			//get aws region
 			$jobvalue[ 's3region' ] = 'us-east-1';
-			$jobvalue[ 's3base_url' ] = '';
 			$jobvalue[ 's3storageclass' ] = !empty( $jobvalue[ 'awsrrs' ] ) ? 'REDUCED_REDUNDANCY' : '';
 			$jobvalue[ 's3dir' ] = $jobvalue[ 'awsdir' ];
 			$jobvalue[ 's3maxbackups' ] = $jobvalue[ 'awsmaxbackups' ];
@@ -234,7 +238,6 @@ class BackWPup_Install {
 			$jobvalue[ 's3secretkey' ] = BackWPup_Encryption::encrypt( $jobvalue[ 'GStorageSecret' ] );
 			$jobvalue[ 's3bucket' ] = $jobvalue[ 'GStorageBucket' ];
 			$jobvalue[ 's3region' ] = 'google-storage';
-			$jobvalue[ 's3base_url' ] = '';
 			$jobvalue[ 's3ssencrypt' ] = '';
 			$jobvalue[ 's3dir' ] = $jobvalue[ 'GStoragedir' ];
 			$jobvalue[ 's3maxbackups' ] = $jobvalue[ 'GStoragemaxbackups' ];
@@ -317,6 +320,7 @@ class BackWPup_Install {
 			}
 		}
 		wp_clear_scheduled_hook( 'backwpup_check_cleanup' );
+		wp_clear_scheduled_hook( 'backwpup_update_message' );
 
 		$activejobs = BackWPup_Option::get_job_ids( 'activetype', 'easycron' );
 		if ( ! empty( $activejobs ) ) {

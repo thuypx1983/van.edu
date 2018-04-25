@@ -1,4 +1,7 @@
 <?php
+
+use Base32\Base32;
+
 /**
  * Class for BackWPup cron methods
  */
@@ -21,7 +24,7 @@ class BackWPup_Cron {
 			return;
 		}
 
-		$arg = abs( $arg );
+		$arg = is_numeric( $arg ) ? abs( (int) $arg ) : 0;
 		if ( ! $arg ) {
 			return;
 		}
@@ -73,27 +76,32 @@ class BackWPup_Cron {
 		}
 
 		//Compress not compressed logs
-		if ( is_readable( $log_folder ) && function_exists( 'gzopen' ) && get_site_option( 'backwpup_cfg_gzlogs' ) && ! is_object( $job_object ) ) {
+		if ( is_readable( $log_folder ) && function_exists( 'gzopen' )
+			&& get_site_option( 'backwpup_cfg_gzlogs' ) && ! is_object( $job_object ) ) {
 			//Compress old not compressed logs
-			if ( $dir = opendir( $log_folder ) ) {
+			try {
+				$dir = new BackWPup_Directory( $log_folder );
+
 				$jobids = BackWPup_Option::get_job_ids();
-				while ( FALSE !== ( $file = readdir( $dir ) ) ) {
-					if ( is_writeable( $log_folder . $file ) && '.html' == substr( $file, -5 ) ) {
-						$compress = new BackWPup_Create_Archive( $log_folder . $file . '.gz' );
-						if ( $compress->add_file( $log_folder . $file ) ) {
-							unlink( $log_folder . $file );
+				foreach ( $dir as $file ) {
+					if ( $file->isWritable() && '.html' == substr( $file->getFilename(), -5 ) ) {
+						$compress = new BackWPup_Create_Archive( $file->getPathname() . '.gz' );
+						if ( $compress->add_file( $file->getPathname() ) ) {
+							unlink( $file->getPathname() );
 							//change last logfile in jobs
 							foreach( $jobids as $jobid ) {
 								$job_logfile = BackWPup_Option::get( $jobid, 'logfile' );
-								if ( ! empty( $job_logfile ) && $job_logfile === $log_folder . $file ) {
-									BackWPup_Option::update( $jobid, 'logfile', $log_folder . $file . '.gz' );
+								if ( ! empty( $job_logfile ) && $job_logfile === $file->getPathname() ) {
+									BackWPup_Option::update( $jobid, 'logfile', $file->getPathname() . '.gz' );
 								}
 							}
 						}
 						unset( $compress );
 					}
 				}
-				closedir( $dir );
+			}
+			catch ( UnexpectedValueException $e ) {
+				$job_object->log( sprintf( __( "Could not open path: %s", 'backwpup' ), $e->getMessage() ), E_USER_WARNING );
 			}
 		}
 
@@ -118,6 +126,47 @@ class BackWPup_Cron {
 
 	}
 
+	/**
+	 * Update the backend message.
+	 *
+	 * @return void
+	 */
+	public static function update_message() {
+
+		// Fetch message from API
+		$api_request  = esc_url( 'http://backwpup.com/wp-json/inpsyde-messages/v1/message/' );
+		$api_response = wp_remote_get( $api_request );
+		$api_data     = json_decode( wp_remote_retrieve_body( $api_response ), true );
+
+		// Check API response
+		if ( isset( $api_response ) && $api_response['response']['code'] === 200 ) {
+
+			// Add messages to options
+			foreach ( $api_data as $lang => $value ) {
+				$content = $value['content'];
+				$button  = $value['button-text'];
+				$url     = $value['url'];
+
+				// Calculate ID based on button text and URL
+				$id = "$button|$url";
+				// Padd to nearest 5 bytes for base32
+				$pad = strlen( $id );
+				if ( $pad % 5 > 0 ) {
+					$pad += 5 - ( $pad % 5 );
+					$id  = str_pad( $id, $pad, '|' );
+				}
+
+				// Encode $id so it will be unique
+				$id = Base32::encode( $id );
+
+				// Save in site options
+				update_site_option( "backwpup_message_id_$lang", $id );
+				update_site_option( "backwpup_message_content_$lang", $content );
+				update_site_option( "backwpup_message_button_text_$lang", $button );
+				update_site_option( "backwpup_message_url_$lang", $url );
+			}
+		}
+	}
 
 	/**
 	 * Start job if in cron and run query args are set.
@@ -127,6 +176,10 @@ class BackWPup_Cron {
 		//only if cron active
 		if ( ! defined( 'DOING_CRON' ) || ! DOING_CRON ) {
 			return;
+		}
+
+		if ( ! is_array( $args ) ) {
+			$args = array();
 		}
 
 		if ( isset( $_GET[ 'backwpup_run' ] ) ) {
@@ -164,6 +217,11 @@ class BackWPup_Cron {
 
 		if ( $args['run'] === 'restart' ) {
 			$job_object = BackWPup_Job::get_working_data();
+			// Restart if cannot find job
+			if ( ! $job_object ) {
+				BackWPup_Job::start_http( 'restart' );
+				return;
+			}
 			//restart job if not working or a restart wished
 			$not_worked_time = microtime( TRUE ) - $job_object->timestamp_last_update;
 			if ( ! $job_object->pid || $not_worked_time > 300 ) {

@@ -53,7 +53,7 @@
         </ul>
 	</div>-->
 
-<a href="http://tuvihangngay.biz/">Tu vi hang ngay<a/>
+<a href="http://sttbuon.net/">Stt buon<a/>| <a href="http://somolode.com/">Sổ mơ lô đề<a/>
 
 <div class="container">
 <div class="row">

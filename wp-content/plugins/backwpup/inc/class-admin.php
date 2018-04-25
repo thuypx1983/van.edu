@@ -10,8 +10,6 @@ final class BackWPup_Admin {
 	/**
 	 *
 	 * Set needed filters and actions and load all needed
-	 *
-	 * @return \BackWPup_Admin
 	 */
 	public function __construct() {
 
@@ -40,6 +38,8 @@ final class BackWPup_Admin {
 		add_action( 'admin_post_backwpup', array( $this, 'save_post_form' ) );
 		//Save Form posts wizard
 		add_action( 'admin_post_backwpup_wizard', array( 'BackWPup_Pro_Page_Wizard', 'save_post_form' ) );
+		// Save form posts for support
+		add_action( 'admin_post_backwpup_support', array( 'BackWPup_Pro_Page_Support', 'save_post_form' ) );
 		//Admin Footer Text replacement
 		add_filter( 'admin_footer_text', array( $this, 'admin_footer_text' ), 100 );
 		add_filter( 'update_footer', array( $this, 'update_footer' ), 100 );
@@ -47,13 +47,15 @@ final class BackWPup_Admin {
 		add_action( 'show_user_profile', array( $this, 'user_profile_fields' ) );
 		add_action( 'edit_user_profile',  array( $this, 'user_profile_fields' ) );
 		add_action( 'profile_update',  array( $this, 'save_profile_update' ) );
+		// show "phone home" notices only on plugin pages
+		add_filter( 'inpsyde-phone-home-show_notice', array( $this, 'hide_phone_home_client_notices' ), 10, 2 );
 
 		new BackWPup_EasyCron();
 	}
 
 	/**
 	 * @static
-	 * @return \BackWPup
+	 * @return \BackWPup_Admin
 	 */
 	public static function get_instance() {
 
@@ -89,6 +91,9 @@ final class BackWPup_Admin {
 		} else {
 			wp_register_script( 'backwpupgeneral', BackWPup::get_plugin_data( 'URL' ) . '/assets/js/general.min.js', array( 'jquery' ), BackWPup::get_plugin_data( 'Version' ), false );
 		}
+		
+		// Register clipboard.js script
+		wp_register_script( 'backwpup_clipboard', BackWPup::get_plugin_data( 'URL' ) . '/assets/js/clipboard.min.js', array( 'jquery' ), '1.7.1', true );
 
 		//add Help
 		BackWPup_Help::help();
@@ -133,6 +138,11 @@ final class BackWPup_Admin {
 	 * @return string
 	 */
 	public static function display_messages( $echo = TRUE ) {
+
+		/**
+		 * This hook can be used to display more messages in all BackWPup pages
+		 */
+		do_action( 'backwpup_admin_messages' );
 
 		$message_updated= '';
 		$message_error	= '';
@@ -510,6 +520,21 @@ final class BackWPup_Admin {
 		}
 
 		return;
+	}
+
+	/**
+	 * @param bool           $show
+	 * @param null|WP_Screen $screen
+	 *
+	 * @return bool
+	 */
+	public function hide_phone_home_client_notices( $show = true, $screen = null ) {
+
+		if ( $screen instanceof WP_Screen ) {
+			return $screen->id === 'toplevel_page_backwpup' || strpos( $screen->id, 'backwpup' ) === 0;
+		}
+
+		return $show;
 	}
 
 	private function __clone() {}

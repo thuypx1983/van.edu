@@ -537,32 +537,11 @@ final class BackWPup_Job {
 	 */
 	public function generate_filename( $name, $suffix = '', $delete_temp_file = true ) {
 
-		$local_time = current_time( 'timestamp' );
-
-		$datevars   = array( '%d', '%j', '%m', '%n', '%Y', '%y', '%a', '%A', '%B', '%g', '%G', '%h', '%H', '%i', '%s' );
-		$datevalues = array(
-			date( 'd', $local_time ),
-			date( 'j', $local_time ),
-			date( 'm', $local_time ),
-			date( 'n', $local_time ),
-			date( 'Y', $local_time ),
-			date( 'y', $local_time ),
-			date( 'a', $local_time ),
-			date( 'A', $local_time ),
-			date( 'B', $local_time ),
-			date( 'g', $local_time ),
-			date( 'G', $local_time ),
-			date( 'h', $local_time ),
-			date( 'H', $local_time ),
-			date( 'i', $local_time ),
-			date( 's', $local_time )
-		);
-
 		if ( $suffix ) {
 			$suffix = '.' . trim( $suffix, '. ' );
 		}
 
-		$name = str_replace( $datevars, $datevalues, self::sanitize_file_name( $name ) );
+		$name = BackWPup_Option::substitute_date_vars( $name );
 		$name .= $suffix;
 		if ( $delete_temp_file && is_writeable( BackWPup::get_plugin_data( 'TEMP' ) . $name ) && ! is_dir( BackWPup::get_plugin_data( 'TEMP' ) . $name ) && ! is_link( BackWPup::get_plugin_data( 'TEMP' ) . $name ) ) {
 			unlink( BackWPup::get_plugin_data( 'TEMP' ) . $name );
@@ -619,6 +598,64 @@ final class BackWPup_Job {
 
 		return $filename;
 	}
+
+	/**
+	 * Checks if the given archive belongs to this job.
+	 *
+	 * @param string $file
+	 *
+	 * @return bool
+	 */
+	public function owns_backup_archive( $file ) {
+		$info = pathinfo( $file );
+		$file = basename( $file, '.' . $info['extension'] );
+
+		// If starts with backwpup, then old-style hash
+		$data = array();
+		if ( substr( $file, 0, 8 ) == 'backwpup' ) {
+			$parts = explode( '_', $file );
+			$data = BackWPup_Option::decode_hash( $parts[1] );
+			if ( ! $data ) {
+				return false;
+			}
+		} else {
+			// New style, must parse
+			// Start at end of file since that's where it is by default
+
+			// Try 10-character chunks first for base 32 and most of base 36
+			for ( $i = strlen( $file ) - 10; $i >= 0; $i--) {
+				$data = BackWPup_Option::decode_hash( substr( $file, $i, 10 ) );
+				if ( $data ) {
+					break;
+				}
+			}
+
+			// Try 9-character chunks for any left-over base 36
+			if ( ! $data ) {
+				for ( $i = strlen( $file ) - 9; $i >= 0; $i--) {
+					$data = BackWPup_Option::decode_hash( substr( $file, $i, 9 ) );
+					if ( $data ) {
+						break;
+					}
+				}
+			}
+
+			if ( ! $data ) {
+				return false;
+			}
+		}
+
+		if ( $data[0] != BackWPup::get_plugin_data( 'hash' ) ) {
+			return false;
+		}
+
+		if ( $data[1] != $this->job['jobid'] ) {
+			return false;
+		}
+
+		return true;
+	}
+
 
 	private function write_running_file() {
 
@@ -751,7 +788,7 @@ final class BackWPup_Job {
 		//timestamp for log file
 		$debug_info = '';
 		if ( $this->is_debug() ) {
-			$debug_info = ' title="[Type: ' . $type . '|Line: ' . $line . '|File: ' . $in_file . '|Mem: ' . size_format( @memory_get_usage( true ), 2 ) . '|Mem Max: ' . size_format( @memory_get_peak_usage( true ), 2 ) . '|Mem Limit: ' . ini_get( 'memory_limit' ) . '|PID: ' . self::get_pid() . ' | UniqID: ' . $this->uniqid . '|Query\'s: ' . get_num_queries() . ']"';
+			$debug_info = ' title="[Type: ' . $type . '|Line: ' . $line . '|File: ' . $in_file . '|Mem: ' . size_format( @memory_get_usage( true ), 2 ) . '|Mem Max: ' . size_format( @memory_get_peak_usage( true ), 2 ) . '|Mem Limit: ' . ini_get( 'memory_limit' ) . '|PID: ' . self::get_pid() . ' | UniqID: ' . $this->uniqid . '|Queries: ' . get_num_queries() . ']"';
 		}
 		$timestamp = '<span datetime="' . date( 'c' ) . '" ' . $debug_info . '>[' . date( 'd-M-Y H:i:s', current_time( 'timestamp' ) ) . ']</span> ';
 
@@ -828,7 +865,7 @@ final class BackWPup_Job {
 
 		$path = str_replace( '\\', '/', $path );
 
-		$abs_path = realpath( ABSPATH );
+		$abs_path = realpath( BackWPup_Path_Fixer::fix_path( ABSPATH ) );
 		if ( $this->job['backupabsfolderup'] ) {
 			$abs_path = dirname( $abs_path );
 		}
@@ -976,24 +1013,30 @@ final class BackWPup_Job {
 		if ( get_site_option( 'backwpup_cfg_maxlogs' ) ) {
 			$log_file_list = array();
 			$log_folder    = trailingslashit( dirname( $this->logfile ) );
-			if ( is_readable( $log_folder ) && $dir = opendir( $log_folder ) ) { //make file list
-				while ( ( $file = readdir( $dir ) ) !== false ) {
-					if ( strpos( $file, 'backwpup_log_' ) == 0 && false !== strpos( $file, '.html' ) ) {
-						$log_file_list[ filemtime( $log_folder . $file ) ] = $file;
+			if ( is_readable( $log_folder ) ) { //make file list
+				try {
+					$dir = new BackWPup_Directory( $log_folder );
+
+					foreach ( $dir as $file ) {
+						if ( ! $file->isDot() && strpos( $file->getFilename(), 'backwpup_log_' ) === 0 && strpos( $file->getFilename(), '.html' ) !== false ) {
+							$log_file_list[ $file->getMTime() ] = clone $file;
+						}
 					}
 				}
-				closedir( $dir );
+				catch ( UnexpectedValueException $e ) {
+					$this->log( sprintf( __( "Could not open path: %s" ), $e->getMessage() ), E_USER_WARNING );
+				}
 			}
-			if ( sizeof( $log_file_list ) > 0 ) {
+			if ( count( $log_file_list ) > 0 ) {
 				krsort( $log_file_list, SORT_NUMERIC );
 				$num_delete_files = 0;
 				$i                = - 1;
-				foreach ( $log_file_list AS $log_file ) {
+				foreach ( $log_file_list as $log_file ) {
 					$i ++;
 					if ( $i < get_site_option( 'backwpup_cfg_maxlogs' ) ) {
 						continue;
 					}
-					unlink( $log_folder . $log_file );
+					unlink( $log_file->getPathname() );
 					$num_delete_files ++;
 				}
 				if ( $num_delete_files > 0 ) {
@@ -1106,16 +1149,21 @@ final class BackWPup_Job {
 		$temp_dir            = BackWPup::get_plugin_data( 'TEMP' );
 		$do_not_delete_files = array( '.htaccess', 'nginx.conf', 'index.php', '.', '..', '.donotbackup' );
 
-		if ( is_writable( $temp_dir ) && $dir = opendir( $temp_dir ) ) {
-			while ( false !== ( $file = readdir( $dir ) ) ) {
-				if ( in_array( $file, $do_not_delete_files, true ) || is_dir( $temp_dir . $file ) || is_link( $temp_dir . $file ) ) {
-					continue;
-				}
-				if ( is_writeable( $temp_dir . $file ) ) {
-					unlink( $temp_dir . $file );
+		if ( is_writable( $temp_dir ) ) {
+			try {
+				$dir = new BackWPup_Directory( $temp_dir );
+				foreach ( $dir as $file ) {
+					if ( in_array( $file->getFilename(), $do_not_delete_files, true ) || $file->isDir() || $file->isLink() ) {
+						continue;
+					}
+					if ( $file->isWritable() ) {
+						unlink( $file->getPathname() );
+					}
 				}
 			}
-			closedir( $dir );
+			catch ( UnexpectedValueException $e ) {
+				$this->log( sprintf( __( "Could not open path: %s" ), $e->getMessage() ), E_USER_WARNING );
+			}
 		}
 	}
 
@@ -1264,12 +1312,12 @@ final class BackWPup_Job {
 					$wp_admin_user = get_users( array( 'role' => 'backwpup_admin', 'number' => 1 ) );
 				}
 				if ( ! empty( $wp_admin_user[0]->ID ) ) {
-					$expiration                  = time() + ( 356 * DAY_IN_SECONDS );
+					$expiration                  = time() + ( 2 * DAY_IN_SECONDS );
 					$manager                     = WP_Session_Tokens::get_instance( $wp_admin_user[0]->ID );
 					$token                       = $manager->create( $expiration );
 					$cookies[ LOGGED_IN_COOKIE ] = wp_generate_auth_cookie( $wp_admin_user[0]->ID, $expiration, 'logged_in', $token );
 				}
-				set_site_transient( 'backwpup_cookies', $cookies, HOUR_IN_SECONDS - 30 );
+				set_site_transient( 'backwpup_cookies', $cookies, 2 * DAY_IN_SECONDS );
 			}
 		} else {
 			$cookies = '';
@@ -1671,45 +1719,49 @@ final class BackWPup_Job {
 		$folder = trailingslashit( $folder );
 
 		if ( ! is_dir( $folder ) ) {
-			$this->log( sprintf( _x( 'Folder %s not exists', 'Folder name', 'backwpup' ), $folder ), E_USER_WARNING );
-
+			$this->log( sprintf( _x( 'Folder %s does not exist', 'Folder name', 'backwpup' ), $folder ), E_USER_WARNING );
 			return $files;
 		}
 
 		if ( ! is_readable( $folder ) ) {
-			$this->log( sprintf( _x( 'Folder %s not readable', 'Folder name', 'backwpup' ), $folder ), E_USER_WARNING );
-
+			$this->log( sprintf( _x( 'Folder %s is not readable', 'Folder name', 'backwpup' ), $folder ), E_USER_WARNING );
 			return $files;
 		}
 
-		if ( $dir = opendir( $folder ) ) {
-			while ( false !== ( $file = readdir( $dir ) ) ) {
-				if ( in_array( $file, array( '.', '..' ), true ) || is_dir( $folder . $file ) ) {
+		try {
+			$dir = new BackWPup_Directory( $folder );
+
+			foreach ( $dir as $file ) {
+				if ( $file->isDot() || $file->isDir() ) {
 					continue;
 				}
+				$path = BackWPup_Path_Fixer::slashify( $file->getPathname() );
 				foreach ( $this->exclude_from_backup as $exclusion ) { //exclude files
 					$exclusion = trim( $exclusion );
-					if ( false !== stripos( $folder . $file, trim( $exclusion ) ) && ! empty( $exclusion ) ) {
+					if ( stripos( $path, $exclusion ) !== false && ! empty( $exclusion ) ) {
 						continue 2;
 					}
 				}
-				if ( $this->job['backupexcludethumbs'] && strpos( $folder, BackWPup_File::get_upload_dir() ) !== false && preg_match( "/\-[0-9]{1,4}x[0-9]{1,4}.+\.(jpg|png|gif)$/i", $file ) ) {
+				if ( $this->job['backupexcludethumbs'] && strpos( $folder, BackWPup_File::get_upload_dir() ) !== false && preg_match( "/\-[0-9]{1,4}x[0-9]{1,4}.+\.(jpg|png|gif)$/i", $file->getFilename() ) ) {
 					continue;
 				}
-				if ( is_link( $folder . $file ) ) {
-					$this->log( sprintf( __( 'Link "%s" not following.', 'backwpup' ), $folder . $file ), E_USER_WARNING );
-				} elseif ( ! is_readable( $folder . $file ) ) {
-					$this->log( sprintf( __( 'File "%s" is not readable!', 'backwpup' ), $folder . $file ), E_USER_WARNING );
+				if ( $file->isLink() ) {
+					$this->log( sprintf( __( 'Link "%s" not following.', 'backwpup' ), $file->getPathname() ), E_USER_WARNING );
+				} elseif ( ! $file->isReadable() ) {
+					$this->log( sprintf( __( 'File "%s" is not readable!', 'backwpup' ), $file->getPathname() ), E_USER_WARNING );
 				} else {
-					$file_size = filesize( $folder . $file );
+					$file_size = $file->getSize();
 					if ( ! is_int( $file_size ) || $file_size < 0 || $file_size > 2147483647 ) {
-						$this->log( sprintf( __( 'File size of “%s” cannot be retrieved. File might be too large and will not be added to queue.', 'backwpup' ), $folder . $file . ' ' . $file_size ), E_USER_WARNING );
+						$this->log( sprintf( __( 'File size of “%s” cannot be retrieved. File might be too large and will not be added to queue.', 'backwpup' ), $file->getPathname() . ' ' . $file_size ), E_USER_WARNING );
 						continue;
 					}
-					$files[] = $folder . $file;
+					$files[] = BackWPup_Path_Fixer::slashify( realpath( $path ) );
 				}
 			}
-			closedir( $dir );
+
+		}
+		catch ( UnexpectedValueException $e ) {
+			$this->log( sprintf( __( "Could not open path: %s" ), $e->getMessage() ), E_USER_WARNING );
 		}
 
 		return $files;
@@ -2254,6 +2306,50 @@ final class BackWPup_Job {
 	}
 
 	/**
+	 * Check if mysqldump is installed in the server.
+	 *
+	 * @param string $dbdumpmysqlfolder Path to mysqldump binary
+	 *
+	 * @return bool
+	 */
+	public static function mysqldump_installed( $dbdumpmysqlfolder ) {
+
+		if( false === self::is_exec() ) {
+			return false;
+		}
+
+		if ( ! file_exists( $dbdumpmysqlfolder ) || ! is_executable( $dbdumpmysqlfolder ) ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Returns mysqldump error message.
+	 *
+	 * @param string $dbdumpmysqlfolder Path to mysqldump binary
+	 *
+	 * @return string
+	 */
+	public static function mysqldump_error_message( $dbdumpmysqlfolder ) {
+
+		$output = '';
+
+		if( false === self::is_exec() ) {
+			$output = '<span style="color:#999;">'. __( 'exec command is not active.', 'backwpup' ) .'</span>';
+			return $output;
+		}
+
+		if ( ! file_exists( $dbdumpmysqlfolder ) || ! is_executable( $dbdumpmysqlfolder ) ) {
+			$output = '<span style="color:#999;">'. __( 'mysqldump binary not found.', 'backwpup' ) .'</span>';
+			return $output;
+		}
+
+		return $output;
+	}
+
+	/**
 	 * Delete some data on cloned objects
 	 */
 	public function __clone() {
@@ -2464,33 +2560,7 @@ final class BackWPup_Job {
 			return false;
 		}
 
-		$datevars  = array( '%d', '%j', '%m', '%n', '%Y', '%y', '%a', '%A', '%B', '%g', '%G', '%h', '%H', '%i', '%s' );
-		$dateregex = array(
-			'(0[1-9]|[12][0-9]|3[01])',
-			'([1-9]|[12][0-9]|3[01])',
-			'(0[1-9]|1[012])',
-			'([1-9]|1[012])',
-			'((19|20|21)[0-9]{2})',
-			'([0-9]{2})',
-			'(am|pm)',
-			'(AM|PM)',
-			'([0-9]{3})',
-			'([1-9]|1[012])',
-			'([0-9]|1[0-9]|2[0-3])',
-			'(0[1-9]|1[012])',
-			'([01][0-9]|2[0-3])',
-			'([0-5][0-9])',
-			'([0-5][0-9])'
-		);
-
-		$regex = "/^" . str_replace( $datevars, $dateregex, preg_quote( self::sanitize_file_name( $this->job['archivename'] ) ) ) . "$/i";
-
-		preg_match( $regex, $filename, $matches );
-		if ( ! empty( $matches[0] ) && $matches[0] === $filename ) {
-			return true;
-		}
-
-		return false;
+		return true;
 	}
 
 	/**
