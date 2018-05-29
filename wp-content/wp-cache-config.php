@@ -5,6 +5,7 @@ WP-Cache Config Sample File
 See wp-cache.php for author details.
 */
 
+$wp_cache_home_path = '/';
 $wpsc_last_post_update = 1508326330; //Added by WP-Cache Manager
 $cache_gc_email_me = 0; //Added by WP-Cache Manager
 $cache_scheduled_time = '00:00'; //Added by WP-Cache Manager
@@ -21,7 +22,7 @@ $wp_cache_disable_utf8 = 0; //Added by WP-Cache Manager
 $cache_time_interval = '600'; //Added by WP-Cache Manager
 $cache_schedule_type = 'interval'; //Added by WP-Cache Manager
 $cache_page_secret = '5b28f4facd3d81a958681430e46c6fad'; //Added by WP-Cache Manager
-$wp_cache_slash_check = 0; //Added by WP-Cache Manager
+$wp_cache_slash_check = 0;
 if ( ! defined('WPCACHEHOME') )
 	define( 'WPCACHEHOME', WP_CONTENT_DIR . "/plugins/wp-super-cache/" ); //Added by WP-Cache Manager
 

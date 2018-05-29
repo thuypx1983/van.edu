@@ -2,7 +2,7 @@
 Tags: header, footer, blog, page, single, post, head, tracking, facebook, og meta tag, open graph, ads, adsense, injections, analytics, amp, pixel
 Requires at least: 3.0
 Tested up to: 4.8.2
-Stable tag: 3.0.7
+Stable tag: 3.1.1
 Donate link: http://www.satollo.net/donations
 Contributors: satollo
 
@@ -92,6 +92,10 @@ FAQs are answered on [Header and Footer](http://www.satollo.net/plugins/header-f
 4. Configurable snippets of code to be recalled on other configurations (to save time)
 
 == Changelog ==
+
+= 3.1.1 =
+
+* Privacy section in the readme.txt
 
 = 3.1.0 =
 
@@ -356,3 +360,7 @@ FAQs are answered on [Header and Footer](http://www.satollo.net/plugins/header-f
 = 1.0.3 =
 
 * added the "only home" header text
+
+== Privacy and GDPR ==
+
+This plugin does not collect or process any personal user data.
